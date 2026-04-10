@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dog River — The Future Already Lives Here</title>
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --night: #07111f;
+      --navy: #0d1e3a;
+      --gold: #f2a030;
+      --cream: #fef9ef;
+      --warm-white: #fffdf7;
+      --text: #2c1a0e;
+      --text-mid: #5a3a1a;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--night);
+      font-family: 'Crimson Pro', Georgia, serif;
+    }
+
+    /* ===== MAP SCREEN ===== */
+    #mapScreen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at 50% 25%, #172d58, var(--navy) 45%, var(--night));
+      z-index: 100;
+      transition: opacity 2s ease;
+    }
+
+    #mapScreen.out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #starCanvas {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    #mapInner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+      z-index: 1;
+      text-align: center;
+      padding: 0 20px;
+    }
+
+    #skMap {
+      width: min(340px, 88vw);
+      height: auto;
+      filter: drop-shadow(0 0 24px rgba(80, 140, 240, .25));
+    }
+
+    .city-dot {
+      animation: cityPulse 3s ease-in-out infinite;
+    }
+
+    .city-dot-2 {
+      animation-delay: .9s;
+    }
+
+    .dog-dot {
+      animation: dogPulse 2s ease-in-out infinite;
+    }
+
+    .dog-ring {
+      animation: dogPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes cityPulse {
+
+      0%,
+      100% {
+        opacity: .8
+      }
+
+      50% {
+        opacity: 1
+      }
+    }
+
+    @keyframes dogPulse {
+
+      0%,
+      100% {
+        opacity: .9
+      }
+
+      50% {
+        opacity: 1
+      }
+    }
+
+    #dogRiverGroup {
+      cursor: pointer;
+      transition: filter .25s;
+    }
+
+    #dogRiverGroup:hover {
+      filter: brightness(1.3) drop-shadow(0 0 14px rgba(242, 160, 48, .85));
+    }
+
+    #mapHeadline {
+      color: var(--cream);
+    }
+
+    #mapHeadline h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      letter-spacing: .02em;
+      line-height: 1;
+    }
+
+    #mapHeadline .meta {
+      font-size: .95rem;
+      color: rgba(255, 255, 255, .5);
+      letter-spacing: .1em;
+      margin-top: 7px;
+    }
+
+    #mapHeadline .tagline {
+      font-family: 'DM Serif Display', serif;
+      font-style: italic;
+      font-size: clamp(1rem, 2.5vw, 1.35rem);
+      color: var(--gold);
+      margin-top: 11px;
+      line-height: 1.45;
+    }
+
+    #enterBtn {
+      padding: 13px 40px;
+      border: 1.5px solid rgba(242, 160, 48, .65);
+      background: transparent;
+      color: var(--gold);
+      font-family: 'Crimson Pro', serif;
+      font-size: 1rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .3s;
+      margin-top: 4px;
+    }
+
+    #enterBtn:hover {
+      background: rgba(242, 160, 48, .12);
+      border-color: var(--gold);
+      box-shadow: 0 0 20px rgba(242, 160, 48, .25);
+    }
+
+    #mapCredit {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255, 255, 255, .28);
+      font-size: .72rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    /* ===== TOWN SCREEN ===== */
+    #townScreen {
+      position: fixed;
+      inset: 0;
+      background: #6a9830;
+      opacity: 0;
+      transition: opacity 1.5s ease;
+      pointer-events: none;
+    }
+
+    #townScreen.on {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #townSvg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .building {
+      cursor: pointer;
+      transition: filter .3s ease;
+    }
+
+    .building:hover {
+      filter: brightness(1.18) drop-shadow(0 0 10px rgba(242, 185, 65, .85));
+    }
+
+    #introOverlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 5;
+      opacity: 0;
+      animation: introAnim 5.8s ease 1.3s forwards;
+    }
+
+    @keyframes introAnim {
+      0% {
+        opacity: 0
+      }
+
+      18% {
+        opacity: 1
+      }
+
+      70% {
+        opacity: 1
+      }
+
+      100% {
+        opacity: 0
+      }
+    }
+
+    #introText {
+      text-align: center;
+      color: white;
+      text-shadow: 0 2px 28px rgba(0, 0, 0, .8), 0 0 80px rgba(0, 0, 0, .5);
+      padding: 0 28px;
+    }
+
+    #introText .ilabel {
+      font-size: .78rem;
+      letter-spacing: .42em;
+      text-transform: uppercase;
+      opacity: .62;
+      margin-bottom: 12px;
+    }
+
+    #introText h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(1.9rem, 5vw, 3.8rem);
+      line-height: 1.18;
+      margin-bottom: 14px;
+    }
+
+    #introText .isub {
+      font-family: 'DM Serif Display', serif;
+      font-style: italic;
+      font-size: clamp(1.1rem, 2.5vw, 1.65rem);
+      color: #f2c060;
+    }
+
+    #townLabel {
+      position: absolute;
+      top: 20px;
+      left: 26px;
+      pointer-events: none;
+    }
+
+    #townLabel .tl-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      color: rgba(255, 255, 255, .92);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, .6);
+      letter-spacing: .04em;
+    }
+
+    #townLabel .tl-sub {
+      font-size: .8rem;
+      color: rgba(255, 255, 255, .55);
+      font-style: italic;
+      margin-top: 1px;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, .5);
+    }
+
+    #townHint {
+      position: absolute;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255, 255, 255, .8);
+      font-family: 'Crimson Pro', serif;
+      font-style: italic;
+      font-size: 1rem;
+      letter-spacing: .06em;
+      pointer-events: none;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, .7);
+      opacity: 0;
+      transition: opacity 1.2s;
+      white-space: nowrap;
+    }
+
+    #backBtn {
+      position: absolute;
+      top: 18px;
+      right: 22px;
+      z-index: 10;
+      background: rgba(0, 0, 0, .32);
+      border: 1px solid rgba(255, 255, 255, .3);
+      color: rgba(255, 255, 255, .85);
+      font-family: 'Crimson Pro', serif;
+      font-size: .88rem;
+      letter-spacing: .06em;
+      padding: 7px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all .2s;
+      backdrop-filter: blur(6px);
+    }
+
+    #backBtn:hover {
+      background: rgba(0, 0, 0, .5);
+      border-color: rgba(255, 255, 255, .6);
+      color: white;
+    }
+
+    /* ===== MODAL ===== */
+    #modal {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .4s ease;
+    }
+
+    #modal.on {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #modalBg {
+      position: absolute;
+      inset: 0;
+      background: rgba(5, 12, 28, .62);
+      backdrop-filter: blur(5px);
+      cursor: pointer;
+    }
+
+    #modalPanel {
+      position: relative;
+      width: min(700px, 96vw);
+      max-height: 86vh;
+      background: var(--warm-white);
+      border-radius: 16px 16px 0 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateY(32px);
+      transition: transform .45s cubic-bezier(.34, 1.4, .64, 1);
+      box-shadow: 0 -6px 48px rgba(0, 0, 0, .38);
+    }
+
+    #modal.on #modalPanel {
+      transform: translateY(0);
+    }
+
+    #modalClose {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 30px;
+      height: 30px;
+      border: none;
+      background: rgba(0, 0, 0, .08);
+      border-radius: 50%;
+      font-size: 1rem;
+      cursor: pointer;
+      color: var(--text-mid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .2s;
+    }
+
+    #modalClose:hover {
+      background: rgba(0, 0, 0, .15);
+    }
+
+    #modalHeader {
+      padding: 22px 22px 18px 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-left: 5px solid #ccc;
+      border-bottom: 1px solid rgba(0, 0, 0, .07);
+      flex-shrink: 0;
+    }
+
+    #charAvatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.25rem;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    #charName {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.35rem;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    #charTitle {
+      font-size: .88rem;
+      color: var(--text-mid);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    #charStory {
+      padding: 18px 28px;
+      max-height: 148px;
+      overflow-y: auto;
+      flex-shrink: 0;
+      border-bottom: 1px solid rgba(0, 0, 0, .07);
+      scrollbar-width: thin;
+    }
+
+    #charStory p {
+      color: var(--text);
+      font-size: 1.02rem;
+      line-height: 1.78;
+      margin-bottom: 10px;
+    }
+
+    #charStory p:last-child {
+      margin-bottom: 0;
+    }
+
+    #chatArea {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #chatPrompt {
+      padding: 9px 28px 5px;
+      font-size: .83rem;
+      color: var(--text-mid);
+      font-style: italic;
+      flex-shrink: 0;
+    }
+
+    #chatMessages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 28px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scrollbar-width: thin;
+    }
+
+    .cmsg {
+      max-width: 84%;
+      padding: 9px 13px;
+      border-radius: 11px;
+      font-size: .98rem;
+      line-height: 1.62;
+    }
+
+    .cmsg.user {
+      align-self: flex-end;
+      background: #1a3060;
+      color: white;
+      border-radius: 11px 11px 3px 11px;
+    }
+
+    .cmsg.asst {
+      align-self: flex-start;
+      background: #f0ede5;
+      color: var(--text);
+      border-radius: 11px 11px 11px 3px;
+    }
+
+    .cmsg.wait {
+      align-self: flex-start;
+      background: #f0ede5;
+      color: var(--text-mid);
+      font-style: italic;
+      border-radius: 11px 11px 11px 3px;
+    }
+
+    #chatInputRow {
+      padding: 10px 28px 18px;
+      display: flex;
+      gap: 8px;
+      border-top: 1px solid rgba(0, 0, 0, .07);
+      flex-shrink: 0;
+    }
+
+    #chatBox {
+      flex: 1;
+      padding: 9px 13px;
+      border: 1.5px solid rgba(0, 0, 0, .14);
+      border-radius: 8px;
+      font-family: 'Crimson Pro', serif;
+      font-size: 1rem;
+      color: var(--text);
+      background: white;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    #chatBox:focus {
+      border-color: #3a6ec0;
+    }
+
+    #sendBtn {
+      padding: 9px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      color: white;
+      cursor: pointer;
+      transition: opacity .2s;
+      flex-shrink: 0;
+    }
+
+    #sendBtn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    /* ===== API KEY MODAL ===== */
+    #apiKeyModal {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(5, 12, 28, .75);
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+
+    #apiKeyModal.on {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #apiKeyBox {
+      background: var(--warm-white);
+      border-radius: 14px;
+      padding: 36px 36px 30px;
+      width: min(480px, 92vw);
+      box-shadow: 0 8px 48px rgba(0, 0, 0, .4);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    #apiKeyBox h3 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.4rem;
+      color: var(--text);
+    }
+
+    #apiKeyBox p {
+      font-size: .98rem;
+      color: var(--text-mid);
+      line-height: 1.65;
+    }
+
+    #apiKeyBox a {
+      color: #2a78c8;
+    }
+
+    #apiKeyInput {
+      padding: 10px 14px;
+      border: 1.5px solid rgba(0, 0, 0, .18);
+      border-radius: 8px;
+      font-family: 'Crimson Pro', serif;
+      font-size: 1rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    #apiKeyInput:focus {
+      border-color: #3a6ec0;
+    }
+
+    #apiKeySave {
+      padding: 11px;
+      border: none;
+      border-radius: 8px;
+      background: #1a3060;
+      color: white;
+      font-family: 'Crimson Pro', serif;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+
+    #apiKeySave:hover {
+      opacity: .85;
+    }
+
+    #apiKeyNote {
+      font-size: .8rem;
+      color: rgba(80, 60, 30, .55);
+      font-style: italic;
+    }
+
+    #apiKeyBtn {
+      position: absolute;
+      bottom: 22px;
+      right: 22px;
+      z-index: 10;
+      background: rgba(0, 0, 0, .22);
+      border: 1px solid rgba(255, 255, 255, .25);
+      color: rgba(255, 255, 255, .6);
+      font-size: .75rem;
+      letter-spacing: .06em;
+      padding: 5px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      transition: all .2s;
+    }
+
+    #apiKeyBtn:hover {
+      background: rgba(0, 0, 0, .4);
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== MAP SCREEN ===== -->
+  <div id="mapScreen">
+    <canvas id="starCanvas"></canvas>
+    <div id="mapInner">
+      <svg id="skMap" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id="gglow">
+            <feGaussianBlur stdDeviation="5" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <linearGradient id="provFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="rgba(35,65,155,.28)" />
+            <stop offset="100%" stop-color="rgba(20,45,110,.18)" />
+          </linearGradient>
+        </defs>
+        <!-- Saskatchewan — tall trapezoid (meridians converge), accurate shape -->
+        <path d="M 65,490 L 335,490 L 326,10 L 74,10 Z" fill="url(#provFill)" stroke="rgba(100,155,235,.55)"
+          stroke-width="1.5" stroke-linejoin="round" />
+        <!-- River systems -->
+        <path d="M 65,318 Q 110,305 155,315 Q 195,325 230,308 Q 265,292 295,300 L 335,295" fill="none"
+          stroke="rgba(80,130,210,.22)" stroke-width="1.2" />
+        <path d="M 65,388 Q 100,372 138,382 Q 168,390 198,374 Q 228,358 260,368 L 310,360 L 335,362" fill="none"
+          stroke="rgba(80,130,210,.18)" stroke-width="1" />
+        <!-- Distance dashes -->
+        <line x1="160" y1="446" x2="171" y2="354" stroke="rgba(242,160,48,.32)" stroke-dasharray="5,5"
+          stroke-width="1" />
+        <line x1="160" y1="446" x2="236" y2="427" stroke="rgba(242,160,48,.32)" stroke-dasharray="5,5"
+          stroke-width="1" />
+        <text x="130" y="400" fill="rgba(242,160,48,.6)" font-size="9" font-family="'Crimson Pro',serif"
+          font-style="italic">147 km</text>
+        <text x="196" y="424" fill="rgba(242,160,48,.6)" font-size="9" font-family="'Crimson Pro',serif"
+          font-style="italic">138 km</text>
+        <!-- Saskatoon -->
+        <circle cx="171" cy="354" r="13" fill="rgba(138,184,232,.1)" />
+        <circle cx="171" cy="354" r="4" fill="#8ab8e8" class="city-dot" filter="url(#glow)" />
+        <text x="186" y="350" fill="rgba(255,255,255,.68)" font-size="11"
+          font-family="'Crimson Pro',serif">Saskatoon</text>
+        <!-- Regina -->
+        <circle cx="236" cy="427" r="13" fill="rgba(138,184,232,.1)" />
+        <circle cx="236" cy="427" r="4" fill="#8ab8e8" class="city-dot city-dot-2" filter="url(#glow)" />
+        <text x="251" y="423" fill="rgba(255,255,255,.68)" font-size="11"
+          font-family="'Crimson Pro',serif">Regina</text>
+        <!-- Dog River — clickable -->
+        <g id="dogRiverGroup" onclick="enterTown()">
+          <circle cx="160" cy="446" r="24" fill="transparent" />
+          <circle cx="160" cy="446" r="20" fill="rgba(242,160,48,.15)" class="dog-ring" filter="url(#gglow)" />
+          <circle cx="160" cy="446" r="7" fill="#f2a030" class="dog-dot" filter="url(#gglow)" />
+          <text x="160" y="470" text-anchor="middle" fill="#f2a030" font-size="12"
+            font-family="'DM Serif Display',serif">Dog River</text>
+          <text x="160" y="483" text-anchor="middle" fill="rgba(242,160,48,.55)" font-size="8.5"
+            font-family="'Crimson Pro',serif" font-style="italic">click to visit</text>
+        </g>
+      </svg>
+
+      <div id="mapHeadline">
+        <h1>Dog River, SK</h1>
+        <div class="meta">Population 412 &nbsp;·&nbsp; Est. 1912 &nbsp;·&nbsp; Spring 2036</div>
+        <div class="tagline">Distance used to be the enemy.<br>That's over.</div>
+      </div>
+      <button id="enterBtn" onclick="enterTown()">Visit Dog River &nbsp;→</button>
+    </div>
+    <div id="mapCredit">AiSK Pioneer Prize Submission</div>
+  </div>
+
+  <!-- ===== TOWN SCREEN ===== -->
+  <div id="townScreen">
+    <button id="backBtn" onclick="backToMap()">← Saskatchewan</button>
+
+    <div id="introOverlay">
+      <div id="introText">
+        <div class="ilabel">Saskatchewan</div>
+        <h1>The city used to be the only place<br>you could have a big life.</h1>
+        <div class="isub">Dog River disagrees.</div>
+      </div>
+    </div>
+
+    <div id="townLabel">
+      <div class="tl-name">Dog River, SK</div>
+      <div class="tl-sub">Near Rouleau &nbsp;·&nbsp; Pop. 412 &nbsp;·&nbsp; Spring 2036</div>
+    </div>
+    <button id="apiKeyBtn" onclick="showApiKey()">⚙ API Key</button>
+    <div id="townHint">✦ Click a building to meet a resident</div>
+
+    <!-- ===== FLAT OVERHEAD MAP ===== -->
+    <svg id="townSvg" viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="prairieG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#5888c0" />
+          <stop offset="14%" stop-color="#78a838" />
+          <stop offset="100%" stop-color="#5a8a28" />
+        </linearGradient>
+        <linearGradient id="roadG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#e8a030" />
+          <stop offset="100%" stop-color="#c88018" />
+        </linearGradient>
+        <filter id="ts">
+          <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="rgba(0,0,0,.5)" />
+        </filter>
+        <filter id="bshadow">
+          <feDropShadow dx="1" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,.28)" />
+        </filter>
+        <filter id="mapglow">
+          <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="rgba(242,185,65,.7)" />
+        </filter>
+      </defs>
+
+      <!-- PRAIRIE BACKGROUND -->
+      <rect width="1200" height="700" fill="url(#prairieG)" />
+
+      <!-- Prairie grass texture lines -->
+      <g stroke="#5a8820" stroke-width="1" opacity=".35">
+        <line x1="0" y1="120" x2="1200" y2="120" />
+        <line x1="0" y1="145" x2="1200" y2="145" />
+        <line x1="0" y1="540" x2="1200" y2="540" />
+        <line x1="0" y1="570" x2="1200" y2="570" />
+        <line x1="0" y1="600" x2="1200" y2="600" />
+        <line x1="0" y1="630" x2="1200" y2="630" />
+        <line x1="0" y1="660" x2="1200" y2="660" />
+      </g>
+
+      <!-- TOWN PAD (cream base — the actual town footprint) -->
+      <ellipse cx="565" cy="340" rx="428" ry="222" fill="#f0e2a8" />
+
+      <!-- SIDEWALK ZONES (slightly darker strips along street edges — between road and buildings) -->
+      <!-- Highway 37 sidewalks -->
+      <rect x="155" y="130" width="820" height="32" fill="#e8d890" rx="2" />
+      <!-- Scott Ave sidewalks -->
+      <rect x="190" y="260" width="760" height="26" fill="#e8d890" />
+      <!-- Railway Ave sidewalks -->
+      <rect x="190" y="466" width="760" height="26" fill="#e8d890" />
+
+      <!-- HIGHWAY 37 (wide main road, horizontal) -->
+      <rect x="0" y="134" width="1200" height="24" fill="url(#roadG)" />
+      <!-- Highway dashes -->
+      <line x1="0" y1="146" x2="1200" y2="146" stroke="#fff8e0" stroke-width="1.5" stroke-dasharray="40,30"
+        opacity=".6" />
+
+      <!-- SCOTT AVE -->
+      <rect x="192" y="264" width="752" height="18" fill="url(#roadG)" />
+      <!-- RAILWAY AVE -->
+      <rect x="192" y="470" width="752" height="18" fill="url(#roadG)" />
+
+      <!-- VERTICAL STREETS (north–south, Hwy 37 to Railway Ave) -->
+      <!-- Rouleau St -->
+      <rect x="218" y="134" width="16" height="354" fill="url(#roadG)" />
+      <!-- Wetmore St -->
+      <rect x="338" y="134" width="16" height="354" fill="url(#roadG)" />
+      <!-- Main St -->
+      <rect x="458" y="134" width="16" height="354" fill="url(#roadG)" />
+      <!-- Drysdale St -->
+      <rect x="578" y="134" width="16" height="354" fill="url(#roadG)" />
+      <!-- Ansley St -->
+      <rect x="698" y="134" width="16" height="354" fill="url(#roadG)" />
+      <!-- Brownlee St -->
+      <rect x="818" y="134" width="16" height="354" fill="url(#roadG)" />
+      <!-- Manson St -->
+      <rect x="928" y="134" width="14" height="354" fill="url(#roadG)" />
+
+      <!-- STREET LABELS — horizontal -->
+      <text x="600" y="152" text-anchor="middle" fill="rgba(80,40,5,.65)" font-size="10"
+        font-family="'Crimson Pro',serif" font-weight="600" letter-spacing="1.5">HIGHWAY 37</text>
+      <text x="600" y="278" text-anchor="middle" fill="rgba(80,40,5,.6)" font-size="9.5"
+        font-family="'Crimson Pro',serif" font-style="italic">Scott Ave.</text>
+      <text x="600" y="484" text-anchor="middle" fill="rgba(80,40,5,.6)" font-size="9.5"
+        font-family="'Crimson Pro',serif" font-style="italic">Railway Ave.</text>
+
+      <!-- STREET LABELS — vertical (rotated) -->
+      <text transform="translate(226,360) rotate(-90)" text-anchor="middle" fill="rgba(80,40,5,.55)" font-size="8.5"
+        font-family="'Crimson Pro',serif" font-style="italic">Rouleau St.</text>
+      <text transform="translate(346,360) rotate(-90)" text-anchor="middle" fill="rgba(80,40,5,.55)" font-size="8.5"
+        font-family="'Crimson Pro',serif" font-style="italic">Wetmore St.</text>
+      <text transform="translate(466,360) rotate(-90)" text-anchor="middle" fill="rgba(80,40,5,.58)" font-size="9"
+        font-family="'Crimson Pro',serif" font-style="italic" font-weight="600">Main St.</text>
+      <text transform="translate(586,360) rotate(-90)" text-anchor="middle" fill="rgba(80,40,5,.55)" font-size="8.5"
+        font-family="'Crimson Pro',serif" font-style="italic">Drysdale St.</text>
+      <text transform="translate(706,360) rotate(-90)" text-anchor="middle" fill="rgba(80,40,5,.55)" font-size="8.5"
+        font-family="'Crimson Pro',serif" font-style="italic">Ansley St.</text>
+      <text transform="translate(826,360) rotate(-90)" text-anchor="middle" fill="rgba(80,40,5,.55)" font-size="8.5"
+        font-family="'Crimson Pro',serif" font-style="italic">Brownlee St.</text>
+      <text transform="translate(935,360) rotate(-90)" text-anchor="middle" fill="rgba(80,40,5,.55)" font-size="8.5"
+        font-family="'Crimson Pro',serif" font-style="italic">Manson St.</text>
+
+      <!-- DECORATIVE TREES (dark green blobs) -->
+      <!-- Far west prairie (Corner Gas side) -->
+      <circle cx="18" cy="92" r="14" fill="#3a7020" opacity=".82" />
+      <circle cx="30" cy="107" r="10" fill="#2e6018" opacity=".76" />
+      <circle cx="12" cy="112" r="9" fill="#447828" opacity=".78" />
+      <!-- NE cluster near airstrip -->
+      <circle cx="1148" cy="108" r="18" fill="#3a7020" opacity=".8" />
+      <circle cx="1162" cy="122" r="13" fill="#2e6018" opacity=".75" />
+      <circle cx="1134" cy="120" r="12" fill="#447828" opacity=".8" />
+      <!-- Town interior trees (parks/lots) -->
+      <!-- Rouleau-Wetmore north block (small park) -->
+      <circle cx="278" cy="192" r="13" fill="#3a7020" opacity=".78" />
+      <circle cx="296" cy="205" r="10" fill="#2e6018" opacity=".72" />
+      <circle cx="260" cy="208" r="9" fill="#447828" opacity=".75" />
+      <!-- Ansley-Brownlee north block (park/open lot) -->
+      <circle cx="757" cy="188" r="14" fill="#3a7020" opacity=".78" />
+      <circle cx="774" cy="202" r="11" fill="#2e6018" opacity=".72" />
+      <circle cx="740" cy="204" r="10" fill="#447828" opacity=".75" />
+      <!-- Brownlee-Manson south (open yard) -->
+      <circle cx="872" cy="420" r="12" fill="#3a7020" opacity=".72" />
+      <circle cx="886" cy="436" r="9" fill="#2e6018" opacity=".68" />
+      <!-- South of town trees -->
+      <circle cx="310" cy="528" r="15" fill="#3a7020" opacity=".7" />
+      <circle cx="294" cy="542" r="11" fill="#2e6018" opacity=".65" />
+      <circle cx="835" cy="535" r="14" fill="#3a7020" opacity=".7" />
+      <circle cx="852" cy="548" r="10" fill="#2e6018" opacity=".65" />
+      <!-- Prairie east trees -->
+      <circle cx="1080" cy="560" r="18" fill="#3a7020" opacity=".65" />
+      <circle cx="1100" cy="575" r="13" fill="#2e6018" opacity=".6" />
+      <!-- Prairie west trees -->
+      <circle cx="118" cy="560" r="18" fill="#3a7020" opacity=".65" />
+      <circle cx="100" cy="575" r="13" fill="#2e6018" opacity=".6" />
+
+      <!-- WATER TOWER (Manson/Brownlee area) -->
+      <rect x="898" y="224" width="22" height="28" fill="#9ab0c0" rx="1" />
+      <ellipse cx="909" cy="224" rx="14" ry="7" fill="#b0c0d0" />
+      <ellipse cx="909" cy="252" rx="11" ry="5" fill="#8a9fb0" />
+      <line x1="898" y1="252" x2="890" y2="272" stroke="#8090a0" stroke-width="2" />
+      <line x1="920" y1="252" x2="928" y2="272" stroke="#8090a0" stroke-width="2" />
+      <line x1="909" y1="252" x2="909" y2="272" stroke="#8090a0" stroke-width="1.5" />
+      <text x="909" y="282" text-anchor="middle" fill="rgba(60,40,10,.55)" font-size="7.5"
+        font-family="'Crimson Pro',serif" font-style="italic">Water Tower</text>
+
+      <!-- RAILWAY LINE (south, below Railway Ave) -->
+      <!-- Rail bed -->
+      <rect x="0" y="545" width="1200" height="28" fill="#7a6040" opacity=".5" />
+      <!-- Rails -->
+      <line x1="0" y1="551" x2="1200" y2="551" stroke="#4a3010" stroke-width="4" />
+      <line x1="0" y1="565" x2="1200" y2="565" stroke="#4a3010" stroke-width="4" />
+      <!-- Ties (every 28px) -->
+      <g stroke="#3a2808" stroke-width="10" stroke-linecap="square" opacity=".65">
+        <line x1="20" y1="548" x2="20" y2="568" />
+        <line x1="48" y1="548" x2="48" y2="568" />
+        <line x1="76" y1="548" x2="76" y2="568" />
+        <line x1="104" y1="548" x2="104" y2="568" />
+        <line x1="132" y1="548" x2="132" y2="568" />
+        <line x1="160" y1="548" x2="160" y2="568" />
+        <line x1="188" y1="548" x2="188" y2="568" />
+        <line x1="216" y1="548" x2="216" y2="568" />
+        <line x1="244" y1="548" x2="244" y2="568" />
+        <line x1="272" y1="548" x2="272" y2="568" />
+        <line x1="300" y1="548" x2="300" y2="568" />
+        <line x1="328" y1="548" x2="328" y2="568" />
+        <line x1="356" y1="548" x2="356" y2="568" />
+        <line x1="384" y1="548" x2="384" y2="568" />
+        <line x1="412" y1="548" x2="412" y2="568" />
+        <line x1="440" y1="548" x2="440" y2="568" />
+        <line x1="468" y1="548" x2="468" y2="568" />
+        <line x1="496" y1="548" x2="496" y2="568" />
+        <line x1="524" y1="548" x2="524" y2="568" />
+        <line x1="552" y1="548" x2="552" y2="568" />
+        <line x1="580" y1="548" x2="580" y2="568" />
+        <line x1="608" y1="548" x2="608" y2="568" />
+        <line x1="636" y1="548" x2="636" y2="568" />
+        <line x1="664" y1="548" x2="664" y2="568" />
+        <line x1="692" y1="548" x2="692" y2="568" />
+        <line x1="720" y1="548" x2="720" y2="568" />
+        <line x1="748" y1="548" x2="748" y2="568" />
+        <line x1="776" y1="548" x2="776" y2="568" />
+        <line x1="804" y1="548" x2="804" y2="568" />
+        <line x1="832" y1="548" x2="832" y2="568" />
+        <line x1="860" y1="548" x2="860" y2="568" />
+        <line x1="888" y1="548" x2="888" y2="568" />
+        <line x1="916" y1="548" x2="916" y2="568" />
+        <line x1="944" y1="548" x2="944" y2="568" />
+        <line x1="972" y1="548" x2="972" y2="568" />
+        <line x1="1000" y1="548" x2="1000" y2="568" />
+        <line x1="1028" y1="548" x2="1028" y2="568" />
+        <line x1="1056" y1="548" x2="1056" y2="568" />
+        <line x1="1084" y1="548" x2="1084" y2="568" />
+        <line x1="1112" y1="548" x2="1112" y2="568" />
+        <line x1="1140" y1="548" x2="1140" y2="568" />
+        <line x1="1168" y1="548" x2="1168" y2="568" />
+        <line x1="1196" y1="548" x2="1196" y2="568" />
+      </g>
+      <!-- High-speed rail electric catenary (wire overhead) -->
+      <line x1="0" y1="540" x2="1200" y2="540" stroke="#b0c8e0" stroke-width="1.2" opacity=".55"
+        stroke-dasharray="60,8" />
+      <text x="1170" y="583" text-anchor="end" fill="rgba(255,255,255,.55)" font-size="8"
+        font-family="'Crimson Pro',serif" font-style="italic">High-Speed Rail ⚡</text>
+
+      <!-- HIGHWAY 37 SHIELD (left side) -->
+      <g transform="translate(30,148)">
+        <path d="M 14,0 Q 28,0 28,10 L 28,26 Q 28,36 14,42 Q 0,36 0,26 L 0,10 Q 0,0 14,0 Z" fill="#1a3860"
+          stroke="white" stroke-width="1.5" />
+        <text x="14" y="17" text-anchor="middle" fill="white" font-size="8" font-family="'Crimson Pro',serif"
+          font-weight="600">HWY</text>
+        <text x="14" y="30" text-anchor="middle" fill="white" font-size="11"
+          font-family="'DM Serif Display',serif">37</text>
+      </g>
+
+      <!-- COMPASS ROSE (top-right) -->
+      <g transform="translate(1138,62)">
+        <circle cx="0" cy="0" r="28" fill="rgba(240,226,168,.85)" stroke="rgba(120,80,20,.4)" stroke-width="1.2" />
+        <polygon points="0,-22 4,0 0,6 -4,0" fill="#b04010" />
+        <polygon points="0,22 4,0 0,-6 -4,0" fill="#8a6040" />
+        <polygon points="-22,0 0,4 6,0 0,-4" fill="#8a6040" />
+        <polygon points="22,0 0,4 -6,0 0,-4" fill="#8a6040" />
+        <text x="0" y="-24" text-anchor="middle" fill="#b04010" font-size="9" font-family="'DM Serif Display',serif"
+          font-weight="600">N</text>
+        <text x="0" y="34" text-anchor="middle" fill="#6a4028" font-size="7.5"
+          font-family="'Crimson Pro',serif">S</text>
+        <text x="-28" y="3.5" text-anchor="middle" fill="#6a4028" font-size="7.5"
+          font-family="'Crimson Pro',serif">W</text>
+        <text x="28" y="3.5" text-anchor="middle" fill="#6a4028" font-size="7.5"
+          font-family="'Crimson Pro',serif">E</text>
+      </g>
+
+      <!-- ============================================================ -->
+      <!-- BUILDINGS (9 clickable) — top-down flat map style            -->
+      <!-- ============================================================ -->
+
+      <!-- 1. CORNER GAS — north of highway, isolated west of town (iconic) -->
+      <g class="building" id="b-gas" onclick="openBuilding('gas')" filter="url(#bshadow)">
+        <!-- Label above (north of hwy buildings get label above) -->
+        <text x="95" y="71" text-anchor="middle" fill="#b04010" font-size="11.5" font-family="'Crimson Pro',serif"
+          font-style="italic" filter="url(#ts)">Corner Gas</text>
+        <!-- Station canopy (entirely north of highway, y=80–132) -->
+        <rect x="46" y="80" width="98" height="52" fill="#e86020" rx="3" />
+        <rect x="50" y="84" width="90" height="44" fill="#d85018" rx="2" opacity=".45" />
+        <!-- Yellow sign strip -->
+        <rect x="58" y="84" width="78" height="13" fill="#f8c828" rx="2" />
+        <text x="97" y="93.5" text-anchor="middle" fill="#8a3008" font-size="7.5" font-family="'DM Serif Display',serif"
+          letter-spacing=".5">CORNER GAS</text>
+        <!-- Pump islands -->
+        <rect x="60" y="100" width="14" height="18" fill="#c04010" rx="1" />
+        <rect x="82" y="100" width="14" height="18" fill="#c04010" rx="1" />
+        <rect x="104" y="100" width="14" height="18" fill="#c04010" rx="1" />
+        <!-- Store building at south edge -->
+        <rect x="56" y="118" width="76" height="14" fill="#f0d898" rx="1" />
+        <rect x="60" y="120" width="14" height="8" fill="#88c0e0" rx="1" opacity=".9" />
+        <rect x="80" y="120" width="14" height="8" fill="#88c0e0" rx="1" opacity=".9" />
+      </g>
+
+      <!-- 2. MEDICAL CENTRE — Wetmore/Main north block -->
+      <g class="building" id="b-medical" onclick="openBuilding('medical')" filter="url(#bshadow)">
+        <rect x="356" y="158" width="90" height="54" fill="#b8d8f0" rx="3" />
+        <rect x="360" y="162" width="82" height="46" fill="#cce4f8" rx="2" opacity=".6" />
+        <!-- Windows (top-down: small blue squares) -->
+        <rect x="364" y="166" width="12" height="12" fill="#78b8e8" rx="1" />
+        <rect x="381" y="166" width="12" height="12" fill="#78b8e8" rx="1" />
+        <rect x="398" y="166" width="12" height="12" fill="#78b8e8" rx="1" />
+        <rect x="364" y="184" width="12" height="12" fill="#78b8e8" rx="1" />
+        <rect x="398" y="184" width="12" height="12" fill="#78b8e8" rx="1" />
+        <!-- Red cross -->
+        <rect x="422" y="168" width="18" height="6" fill="#e82828" rx="1" />
+        <rect x="427" y="163" width="6" height="18" fill="#e82828" rx="1" />
+        <text x="401" y="225" text-anchor="middle" fill="#2a6898" font-size="11" font-family="'Crimson Pro',serif"
+          font-style="italic" filter="url(#ts)">Medical Centre</text>
+      </g>
+
+      <!-- 3. DOG RIVER SCHOOL — Drysdale/Ansley north block -->
+      <g class="building" id="b-school" onclick="openBuilding('school')" filter="url(#bshadow)">
+        <rect x="598" y="156" width="90" height="58" fill="#c86040" rx="3" />
+        <rect x="602" y="160" width="82" height="50" fill="#d87050" rx="2" opacity=".55" />
+        <!-- Windows -->
+        <rect x="606" y="164" width="14" height="12" fill="#a8c8e0" rx="1" />
+        <rect x="625" y="164" width="14" height="12" fill="#a8c8e0" rx="1" />
+        <rect x="644" y="164" width="14" height="12" fill="#a8c8e0" rx="1" />
+        <rect x="663" y="164" width="14" height="12" fill="#a8c8e0" rx="1" />
+        <rect x="606" y="184" width="14" height="12" fill="#a8c8e0" rx="1" />
+        <rect x="663" y="184" width="14" height="12" fill="#a8c8e0" rx="1" />
+        <!-- Door (top-down: dark rectangle at south edge) -->
+        <rect x="635" y="206" width="18" height="8" fill="#8a4020" rx="1" />
+        <!-- Flag pole dot -->
+        <circle cx="694" cy="165" r="3" fill="#8a8a8a" />
+        <line x1="694" y1="157" x2="694" y2="165" stroke="#8a8a8a" stroke-width="1.5" />
+        <text x="643" y="228" text-anchor="middle" fill="#8a3a18" font-size="11" font-family="'Crimson Pro',serif"
+          font-style="italic" filter="url(#ts)">Dog River School</text>
+      </g>
+
+      <!-- 4. GRAIN ELEVATOR — SOUTH of highway, directly across from Corner Gas -->
+      <g class="building" id="b-elevator" onclick="openBuilding('elevator')" filter="url(#bshadow)">
+        <!-- Main tower (top-down narrow rect — the iconic tall leg) -->
+        <rect x="64" y="164" width="22" height="88" fill="#d4b060" rx="2" />
+        <!-- Tower detail strips -->
+        <rect x="68" y="170" width="14" height="8" fill="#b89040" rx="1" />
+        <rect x="68" y="182" width="14" height="8" fill="#b89040" rx="1" />
+        <rect x="68" y="194" width="14" height="8" fill="#b89040" rx="1" />
+        <!-- DOG RIVER text -->
+        <text x="75" y="222" text-anchor="middle" fill="#4a2800" font-size="6.5" font-family="'DM Serif Display',serif"
+          letter-spacing="1.2">DOG</text>
+        <text x="75" y="231" text-anchor="middle" fill="#4a2800" font-size="6.5" font-family="'DM Serif Display',serif"
+          letter-spacing="1.2">RIVER</text>
+        <!-- Annex base -->
+        <rect x="54" y="234" width="42" height="18" fill="#c8a050" rx="2" />
+        <!-- Auger dots -->
+        <circle cx="60" cy="248" r="4" fill="#a08030" opacity=".8" />
+        <circle cx="90" cy="248" r="4" fill="#a08030" opacity=".8" />
+        <text x="75" y="270" text-anchor="middle" fill="#8a6018" font-size="11" font-family="'Crimson Pro',serif"
+          font-style="italic" filter="url(#ts)">Co-op &amp; Farm</text>
+      </g>
+
+      <!-- 5. PRAIRIE TECH HUB — Brownlee/Manson south block -->
+      <g class="building" id="b-hub" onclick="openBuilding('hub')" filter="url(#bshadow)">
+        <rect x="834" y="310" width="80" height="58" fill="#80b870" rx="3" />
+        <rect x="838" y="314" width="72" height="50" fill="#96c885" rx="2" opacity=".5" />
+        <!-- Glass panels (top-down: blue rectangles = skylights) -->
+        <rect x="842" y="318" width="28" height="18" fill="#70b8d8" rx="1" opacity=".85" />
+        <rect x="876" y="318" width="28" height="18" fill="#70b8d8" rx="1" opacity=".85" />
+        <rect x="842" y="342" width="28" height="18" fill="#70b8d8" rx="1" opacity=".85" />
+        <rect x="876" y="342" width="28" height="18" fill="#70b8d8" rx="1" opacity=".85" />
+        <!-- Solar panels on roof -->
+        <rect x="843" y="319" width="26" height="6" fill="#2a4060" rx="0.5" opacity=".7" />
+        <rect x="877" y="319" width="26" height="6" fill="#2a4060" rx="0.5" opacity=".7" />
+        <!-- Sign -->
+        <rect x="842" y="360" width="72" height="9" fill="#2a6848" rx="1" />
+        <text x="878" y="367" text-anchor="middle" fill="rgba(255,255,255,.9)" font-size="6"
+          font-family="'Crimson Pro',serif" letter-spacing=".8">PRAIRIE TECH HUB</text>
+        <text x="874" y="384" text-anchor="middle" fill="#2a6848" font-size="11" font-family="'Crimson Pro',serif"
+          font-style="italic" filter="url(#ts)">Prairie Tech Hub</text>
+      </g>
+
+      <!-- 6. AIRSTRIP — east of town, on highway -->
+      <g class="building" id="b-airstrip" onclick="openBuilding('airstrip')" filter="url(#bshadow)">
+        <!-- Runway (long strip, top-down) -->
+        <rect x="1010" y="128" width="170" height="16" fill="#a8a898" rx="2" />
+        <line x1="1010" y1="136" x2="1180" y2="136" stroke="white" stroke-width="1.5" stroke-dasharray="18,12"
+          opacity=".7" />
+        <!-- Terminal building -->
+        <rect x="1022" y="112" width="82" height="36" fill="#b0c0d0" rx="3" />
+        <rect x="1026" y="116" width="22" height="14" fill="#78a8d0" rx="1" opacity=".85" />
+        <rect x="1054" y="116" width="22" height="14" fill="#78a8d0" rx="1" opacity=".85" />
+        <rect x="1082" y="116" width="18" height="14" fill="#78a8d0" rx="1" opacity=".85" />
+        <!-- Windsock -->
+        <circle cx="1108" cy="108" r="3" fill="#e02828" opacity=".85" />
+        <line x1="1108" y1="108" x2="1108" y2="98" stroke="#909090" stroke-width="1.5" />
+        <!-- Electric plane (top-down) -->
+        <g transform="translate(1095,144)">
+          <ellipse cx="0" cy="0" rx="22" ry="5" fill="#e8f0f8" />
+          <line x1="-5" y1="0" x2="-5" y2="0" stroke="none" />
+          <ellipse cx="0" cy="0" rx="4" ry="18" fill="#ccd8ea" opacity=".9" />
+          <ellipse cx="-18" cy="0" rx="3" ry="7" fill="#b0c0d0" opacity=".8" />
+          <circle cx="20" cy="0" r="3" fill="#c8d8e8" />
+          <line x1="-10" y1="0" x2="18" y2="0" stroke="#60a8f0" stroke-width="1.2" opacity=".5" />
+        </g>
+        <text x="1063" y="162" text-anchor="middle" fill="#5a7090" font-size="11" font-family="'Crimson Pro',serif"
+          font-style="italic" filter="url(#ts)">Dog River Airstrip</text>
+      </g>
+
+      <!-- 7. THE RUBY — right next door to Corner Gas, north of highway -->
+      <g class="building" id="b-cafe" onclick="openBuilding('cafe')" filter="url(#bshadow)">
+        <!-- Label above -->
+        <text x="197" y="71" text-anchor="middle" fill="#a03838" font-size="11.5" font-family="'Crimson Pro',serif"
+          font-style="italic" filter="url(#ts)">The Ruby</text>
+        <!-- Building (same y-band as Corner Gas: y=80–132) -->
+        <rect x="152" y="80" width="90" height="52" fill="#e89898" rx="3" />
+        <rect x="156" y="84" width="82" height="44" fill="#f0aaaa" rx="2" opacity=".5" />
+        <!-- Sign strip -->
+        <rect x="160" y="84" width="74" height="12" fill="#c05858" rx="2" />
+        <text x="197" y="93" text-anchor="middle" fill="white" font-size="7" font-family="'Crimson Pro',serif"
+          letter-spacing=".5">THE RUBY</text>
+        <!-- Café tables (top-down circles) -->
+        <circle cx="170" cy="106" r="7" fill="#c07070" opacity=".78" />
+        <circle cx="190" cy="106" r="7" fill="#c07070" opacity=".78" />
+        <circle cx="210" cy="106" r="7" fill="#c07070" opacity=".78" />
+        <circle cx="230" cy="106" r="7" fill="#c07070" opacity=".78" />
+        <!-- Door -->
+        <rect x="184" y="124" width="26" height="8" fill="#a05050" rx="1" />
+      </g>
+
+      <!-- 8. POLICE STATION — Drysdale/Ansley south block -->
+      <g class="building" id="b-police" onclick="openBuilding('police')" filter="url(#bshadow)">
+        <rect x="594" y="370" width="78" height="56" fill="#3a5898" rx="3" />
+        <rect x="598" y="374" width="70" height="48" fill="#4a68a8" rx="2" opacity=".55" />
+        <!-- Windows -->
+        <rect x="602" y="378" width="16" height="14" fill="#88b0e0" rx="1" opacity=".85" />
+        <rect x="624" y="378" width="16" height="14" fill="#88b0e0" rx="1" opacity=".85" />
+        <rect x="646" y="378" width="16" height="14" fill="#88b0e0" rx="1" opacity=".85" />
+        <!-- Badge shape on roof (top-down) -->
+        <polygon points="633,396 628,402 630,410 638,412 645,408 645,400" fill="#f8c828" opacity=".8" />
+        <!-- Door at south end -->
+        <rect x="622" y="418" width="20" height="8" fill="#1a3060" rx="1" />
+        <!-- Sign -->
+        <rect x="598" y="372" width="70" height="8" fill="#1a3060" rx="1" />
+        <text x="633" y="378.5" text-anchor="middle" fill="rgba(255,255,255,.9)" font-size="6"
+          font-family="'Crimson Pro',serif" letter-spacing=".5">RCMP — DOG RIVER</text>
+        <text x="633" y="440" text-anchor="middle" fill="#2a3a78" font-size="11" font-family="'Crimson Pro',serif"
+          font-style="italic" filter="url(#ts)">Police Station</text>
+      </g>
+
+      <!-- 9. TRAIN STATION — on Railway Ave, central (high-speed!) -->
+      <g class="building" id="b-train" onclick="openBuilding('train')" filter="url(#bshadow)">
+        <!-- Platform (long strip on railway) -->
+        <rect x="440" y="484" width="130" height="18" fill="#c0a870" rx="2" />
+        <!-- Station building (north side of platform) -->
+        <rect x="454" y="464" width="104" height="24" fill="#8a6840" rx="3" />
+        <rect x="458" y="468" width="26" height="12" fill="#a8c8e0" rx="1" opacity=".85" />
+        <rect x="490" y="468" width="26" height="12" fill="#a8c8e0" rx="1" opacity=".85" />
+        <rect x="522" y="468" width="26" height="12" fill="#a8c8e0" rx="1" opacity=".85" />
+        <!-- Station sign -->
+        <rect x="458" y="464" width="96" height="8" fill="#6a4828" rx="1" />
+        <text x="506" y="470.5" text-anchor="middle" fill="rgba(255,255,255,.9)" font-size="6"
+          font-family="'Crimson Pro',serif" letter-spacing=".5">DOG RIVER STATION</text>
+        <!-- High-speed train on tracks (top-down sleek rectangle) -->
+        <rect x="300" y="547" width="240" height="12" fill="#d0e8f8" rx="5" />
+        <rect x="302" y="549" width="234" height="8" fill="#e8f4ff" rx="4" opacity=".7" />
+        <rect x="530" y="547" width="14" height="12" fill="#b0c8e8" rx="2" />
+        <rect x="302" y="547" width="12" height="12" fill="#c8e0f8" rx="3" />
+        <!-- Speed lines -->
+        <line x1="285" y1="551" x2="298" y2="551" stroke="#b0d0f0" stroke-width="2" opacity=".6"
+          stroke-linecap="round" />
+        <line x1="280" y1="555" x2="298" y2="555" stroke="#b0d0f0" stroke-width="1.5" opacity=".5"
+          stroke-linecap="round" />
+        <line x1="285" y1="559" x2="298" y2="559" stroke="#b0d0f0" stroke-width="1.5" opacity=".4"
+          stroke-linecap="round" />
+        <!-- ⚡ electric marker -->
+        <text x="415" y="556" fill="rgba(160,210,255,.8)" font-size="9" font-family="sans-serif">⚡</text>
+        <text x="506" y="508" text-anchor="middle" fill="#5a3e1a" font-size="11" font-family="'Crimson Pro',serif"
+          font-style="italic" filter="url(#ts)">Train Station</text>
+      </g>
+
+    </svg>
+  </div>
+
+  <!-- ===== MODAL ===== -->
+  <div id="modal">
+    <div id="modalBg" onclick="closeModal()"></div>
+    <div id="modalPanel">
+      <button id="modalClose" onclick="closeModal()">✕</button>
+      <div id="modalHeader">
+        <div id="charAvatar"></div>
+        <div>
+          <div id="charName"></div>
+          <div id="charTitle"></div>
+        </div>
+      </div>
+      <div id="charStory"></div>
+      <div id="chatArea">
+        <div id="chatPrompt"></div>
+        <div id="chatMessages"></div>
+        <div id="chatInputRow">
+          <input id="chatBox" type="text" placeholder="Ask them anything about life in Dog River…">
+          <button id="sendBtn" onclick="sendChat()">→</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== API KEY MODAL ===== -->
+  <div id="apiKeyModal">
+    <div id="apiKeyBox">
+      <h3>Anthropic API Key</h3>
+      <p>To chat with Dog River residents, enter your Anthropic API key. It's stored locally in your browser and never
+        sent anywhere except directly to <strong>api.anthropic.com</strong>.</p>
+      <p>Get a key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
+      <input id="apiKeyInput" type="password" placeholder="sk-ant-...">
+      <button id="apiKeySave" onclick="saveApiKey()">Save &amp; Continue</button>
+      <div id="apiKeyNote">Your key is saved in localStorage on this device only.</div>
+    </div>
+  </div>
+
+  <script>
+    // ===== API KEY =====
+    function getApiKey() { return localStorage.getItem('dr_api_key') || ''; }
+    function saveApiKey() {
+      const k = document.getElementById('apiKeyInput').value.trim();
+      if (!k) { alert('Please enter a key.'); return; }
+      localStorage.setItem('dr_api_key', k);
+      document.getElementById('apiKeyModal').classList.remove('on');
+    }
+    function showApiKey() {
+      document.getElementById('apiKeyInput').value = getApiKey();
+      document.getElementById('apiKeyModal').classList.add('on');
+    }
+    function requireApiKey() {
+      if (!getApiKey()) { showApiKey(); return false; }
+      return true;
+    }
+    (function () {
+      const c = document.getElementById('starCanvas'), ctx = c.getContext('2d');
+      function draw() {
+        c.width = window.innerWidth; c.height = window.innerHeight;
+        ctx.clearRect(0, 0, c.width, c.height);
+        for (let i = 0; i < 220; i++) {
+          const x = Math.random() * c.width, y = Math.random() * c.height * .72;
+          const r = Math.random() * 1.4 + .2, a = Math.random() * .75 + .25;
+          ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fill();
+        }
+      }
+      draw(); window.addEventListener('resize', draw);
+    })();
+
+    // ===== NAVIGATION =====
+    let hintShown = false;
+    function enterTown() {
+      document.getElementById('mapScreen').classList.add('out');
+      document.getElementById('townScreen').classList.add('on');
+      if (!hintShown) {
+        setTimeout(() => { document.getElementById('townHint').style.opacity = '.85'; hintShown = true; }, 7800);
+      } else {
+        document.getElementById('townHint').style.opacity = '.85';
+      }
+    }
+    function backToMap() {
+      closeModal();
+      document.getElementById('townScreen').classList.remove('on');
+      document.getElementById('mapScreen').classList.remove('out');
+    }
+    setTimeout(() => {
+      if (!document.getElementById('mapScreen').classList.contains('out')) enterTown();
+    }, 9000);
+
+    // ===== CHARACTERS =====
+    const CHARS = {
+
+      medical: {
+        name: 'Amara Diallo, NP', title: 'Nurse Practitioner · Dog River Medical Centre',
+        initials: 'AD', color: '#2a78c8',
+        story: `Eight years ago, Amara's patients drove themselves to Regina for anything she couldn't handle in clinic. Suspected cardiac issues, unusual skin conditions, anything needing a specialist — ninety minutes each way, a half-day of waiting, and often a follow-up trip. Many just didn't go.
+
+Today her clinic runs AI-assisted ECG interpretation, imaging analysis, and live specialist consultations without anyone leaving Dog River. The waiting room has changed. People come in before things get serious.
+
+"I'm still the NP," she says. "I just have the best colleagues in the world, and none of them need parking."`,
+        sys: `You are Amara Diallo, Nurse Practitioner at Dog River Medical Centre in rural Saskatchewan. You've worked here 8 years. Before AI tools, patients had to drive themselves to Regina (90 min each way) for specialist care — many simply didn't go. AI diagnostic tools (ECG analysis, imaging support, live specialist video consultations) transformed your practice in the last 2-3 years. You are an NP, not a doctor — be accurate about that distinction. Warm, direct, practically proud of your community. Answer naturally in 2-4 sentences.`
+      },
+
+      school: {
+        name: 'Mrs. Sandra Chen', title: 'Teacher, Grades 7–12 · Dog River School',
+        initials: 'SC', color: '#b85a28',
+        story: `Sandra teaches everything. Math, English, science, social studies — in a school of 80 kids, you wear every hat. For years, advanced courses were a rumour. University prep was something motivated kids figured out alone.
+
+Last spring, three of her Grade 12 students were accepted to U of S. One is studying mechanical engineering in Montreal. A kid from Dog River who'd never left Saskatchewan except for hockey tournaments.
+
+"They didn't need to leave to become someone," Sandra says. "They just needed the same tools everyone else had."`,
+        sys: `You are Mrs. Sandra Chen, teacher at Dog River School in Saskatchewan. Grades 7-12, all subjects, 80 kids total. AI tutoring tools arrived 2 years ago. Now kids get personalized help in calculus, physics, coding, languages at any hour. University acceptances have jumped. You've been here 14 years, love Dog River, fiercely proud of your students. Answer warmly, specifically, in 2-4 sentences.`
+      },
+
+      elevator: {
+        name: 'Earl McCrae', title: '3rd Generation Farmer · McCrae Family Farm',
+        initials: 'EM', color: '#9a7020',
+        story: `Earl farms 2,400 acres outside Dog River, same land his grandfather broke in 1948. The McCrae family has survived drought, low prices, and two recessions. What they never had was perfect information.
+
+Now Earl knows what every section needs before he starts the tractor. Soil moisture, nitrogen levels, pest pressure — mapped field by field, updated daily. His input costs dropped 28% in two seasons.
+
+"My grandfather would've killed for this," he says. "He just would've wanted to understand it first. Fair enough."`,
+        sys: `You are Earl McCrae, 3rd generation farmer near Dog River, Saskatchewan. 2,400 acres. Grandfather broke this land in 1948. Late 40s, deeply practical, dry Saskatchewan humour. Using AI precision ag tools for 2 years. Input costs down 28%. Short sentences. Occasional dry joke. Answer in 2-4 sentences.`
+      },
+
+      hub: {
+        name: 'Jake Bellerose', title: 'Founder, Prairie Stack · Prairie Tech Hub',
+        initials: 'JB', color: '#1e8060',
+        story: `Jake left Dog River at 19 for Calgary. Software job, apartment in Beltline, exactly what everyone from small towns does. He came back at 27 during a January ice storm because his mom was sick and he needed somewhere to think.
+
+He never left again. Prairie Stack now has 11 employees, seven of them from within 40 kilometres of Dog River. They build software for agricultural supply chains. Their biggest client is in Rotterdam.
+
+"The internet doesn't know we're in Saskatchewan," he says. "That used to be a problem. Now it's the whole point."`,
+        sys: `You are Jake Bellerose, 29, founder of Prairie Stack in Dog River. Software company, biggest client in Rotterdam. 11 employees, 7 local. Returned from Calgary at 27. Use AI tools for legal, financial, marketing, code review. Ambitious, proud of what you're building here. Answer naturally in 2-4 sentences.`
+      },
+
+      airstrip: {
+        name: 'Maria Santos', title: 'Radiologist & Dog River Resident · Daily Commuter',
+        initials: 'MS', color: '#4050a0',
+        story: `Maria moved from Stonebridge — a suburb of Saskatoon — to Dog River eighteen months ago. Her husband's family had land here. They'd talked about it for years, never seriously.
+
+The electric air taxi changed the math. Forty minutes to Saskatoon, twice daily, at a price that finally made sense. Maria works as a radiologist at St. Paul's and reads images remotely for two rural clinics. She's home for supper every night.
+
+"My commute from Stonebridge was longer," she says. "And I didn't have a yard."`,
+        sys: `You are Maria Santos, 38, radiologist who moved from Stonebridge to Dog River 18 months ago. Commute via electric air taxi — 40 minutes, twice daily. Also read medical images remotely for two rural clinics. 6-year-old daughter. Calm, practical, a little evangelical about the lifestyle. Miss some Saskatoon things. Answer in 2-4 sentences.`
+      },
+
+      // ===== 4 NEW CHARACTERS (Corner Gas cast + originals) =====
+
+      gas: {
+        name: 'Brent Leroy', title: 'Proprietor · Corner Gas, Dog River',
+        initials: 'BL', color: '#c04010',
+        story: `Brent Leroy has run Corner Gas since his dad Oscar handed it to him — an event that resembled less a gift and more Oscar deciding he no longer wanted to deal with it. For twenty-two years, Brent's business philosophy has been: be there, have gas, don't get excited about anything.
+
+He started using AI tools mostly to win arguments with Oscar, which works better in theory than practice because Oscar refuses to argue with a computer on principle. Wanda showed Brent the inventory software. Hank spent forty minutes asking the AI to predict lottery numbers, emerged nodding seriously, and has not won anything. The AI now handles the philosophical questions customers keep directing at a gas station — why is gas so expensive, is it going to snow, what's wrong with the government.
+
+"It gives longer answers than I do," Brent says. "Customers seem to like that. I don't take it personally."`,
+        sys: `You are Brent Leroy, who runs Corner Gas in Dog River, Saskatchewan. You inherited it from your dad Oscar, who still comes in most days to argue. Wanda is your sarcastic and highly competent employee. Hank is your well-meaning but not always logical best friend. You are dry, philosophical in a low-key way, deeply content with your life despite regular complaints about it. You use AI for inventory and to answer existential questions from customers. Speak like Brent from Corner Gas: deadpan, self-aware, not particularly excited about anything. 2-4 sentences.`
+      },
+
+      cafe: {
+        name: 'Lacey Burrows', title: 'Proprietor · The Ruby, Dog River',
+        initials: 'LB', color: '#b03050',
+        story: `Lacey Burrows came to Dog River from Toronto twelve years ago to settle her grandmother Ruby's estate. She meant to stay six weeks. The town had other ideas, as it tends to.
+
+She runs The Ruby, the café right next door to Corner Gas that's been the social centre of Dog River since before she arrived. She started using AI to develop new menu items — specifically to solve the mystery of what Dog River people actually want to eat beyond what they've always eaten. The AI analyzed two years of order history and produced what Lacey considers the single most accurate description of small-town Saskatchewan food psychology she has ever encountered: customers will try a new item once after someone else tries it first, then order it forever if the portion size is adequate.
+
+"I've been here twelve years," she says, "and I couldn't have said it that well."`,
+        sys: `You are Lacey Burrows, who runs The Ruby café in Dog River right next door to Corner Gas. You came from Toronto twelve years ago intending to stay six weeks. You're warm, enthusiastic, still occasionally slightly out of step with small-town life but less than you used to be. You use AI to analyze customer ordering patterns and develop recipes. The AI's description of Dog River food psychology — "try once after someone else does, order forever if portions are adequate" — was your single most useful business insight ever. Brent from Corner Gas is your neighbour and friend. Answer warmly in 2-4 sentences.`
+      },
+
+      police: {
+        name: 'Davis Quinton & Karen Pelly', title: 'Sergeant & Officer · Dog River RCMP Detachment',
+        initials: 'DK', color: '#2a4888',
+        story: `Dog River's RCMP detachment has two officers: Constable Karen Pelly, who does the actual police work, and Sergeant Davis Quinton, who has cultivated over seventeen years a professional equilibrium between law enforcement and not exerting himself unnecessarily.
+
+Karen introduced the AI tools. She uses them for case research, report analysis, and pattern recognition on Dog River's famously repetitive incident log. Davis uses AI to write his end-of-shift reports. The reports are now, by every objective measure, significantly better written.
+
+Davis considers this a net positive for everyone. Karen calls it "not what I meant when I explained the software to him." Their case numbers remain unchanged. Dog River remains extremely safe, which both officers attribute to excellent policing. Karen sometimes adds a caveat.`,
+        sys: `You are the Dog River RCMP detachment. Speak primarily as Sergeant Davis Quinton — agreeable, not particularly energetic, deeply satisfied with a low-crime jurisdiction, and genuinely proud of his AI-generated shift reports. Constable Karen Pelly occasionally corrects him with competence and mild exasperation. Davis is not incompetent, just very relaxed about policing a town with minimal incidents. Speak in Davis's voice: pleasant, unbothered, occasionally interrupted by Karen. 2-4 sentences.`
+      },
+
+      train: {
+        name: 'Gordon Flett', title: 'Station Manager · Dog River High-Speed Rail',
+        initials: 'GF', color: '#6a4020',
+        story: `Gordon Flett spent thirty-five years as a freight supervisor for CP Rail, based out of Moose Jaw. He managed bulk commodity movement — grain, potash, oil — across the prairies. When he retired in 2021, it was quieter than he expected.
+
+He applied to manage Dog River's new high-speed stop when the line opened. The stop serves roughly 9,000 people across several rural municipalities: farmers, healthcare workers, students making the Saskatoon-Regina run. He uses AI scheduling tools to coordinate connections with the regional bus network, manage accessibility requests, and optimize the 90-second stop window.
+
+"People out here don't have a lot of travel options," he says. "If this stop doesn't work, they're driving two hours. I take that seriously."`,
+        sys: `You are Gordon Flett, 71, former CP Rail freight supervisor, now managing Dog River's high-speed rail stop. Saskatoon to Regina in 44 minutes. The stop serves about 9,000 rural residents who'd otherwise drive two hours. You use AI scheduling and logistics tools to make the 90-second stop work: bus connections, accessibility coordination, passenger notifications. You're serious about rural connectivity. Warm but not chatty. The work matters to you. Answer thoughtfully in 2-4 sentences.`
+      }
+
+    };
+
+    let activeChar = null, history = [];
+
+    function openBuilding(id) {
+      const ch = CHARS[id];
+      if (!ch) return;
+      activeChar = id; history = [];
+      document.getElementById('charAvatar').textContent = ch.initials;
+      document.getElementById('charAvatar').style.background = ch.color;
+      document.getElementById('charName').textContent = ch.name;
+      document.getElementById('charTitle').textContent = ch.title;
+      document.getElementById('modalHeader').style.borderLeftColor = ch.color;
+      document.getElementById('charStory').innerHTML =
+        ch.story.split('\n\n').map(p => `<p>${p}</p>`).join('');
+      document.getElementById('chatMessages').innerHTML = '';
+      document.getElementById('chatPrompt').textContent =
+        `Ask ${ch.name.split(' ')[0]} anything about life in Dog River`;
+      document.getElementById('sendBtn').style.background = ch.color;
+      document.getElementById('chatBox').value = '';
+      document.getElementById('modal').classList.add('on');
+      setTimeout(() => document.getElementById('chatBox').focus(), 460);
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('on');
+      activeChar = null;
+    }
+
+    async function sendChat() {
+      if (!requireApiKey()) return;
+      const box = document.getElementById('chatBox');
+      const txt = box.value.trim();
+      if (!txt || !activeChar) return;
+      const ch = CHARS[activeChar];
+      box.value = '';
+      const msgs = document.getElementById('chatMessages');
+
+      const ud = document.createElement('div');
+      ud.className = 'cmsg user'; ud.textContent = txt; msgs.appendChild(ud);
+
+      const wd = document.createElement('div');
+      wd.className = 'cmsg wait'; wd.textContent = '…'; msgs.appendChild(wd);
+      msgs.scrollTop = msgs.scrollHeight;
+
+      const btn = document.getElementById('sendBtn');
+      btn.disabled = true;
+      history.push({ role: 'user', content: txt });
+
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': getApiKey(),
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1000,
+            system: ch.sys,
+            messages: history
+          })
+        });
+        const data = await res.json();
+        if (data.error) { throw new Error(data.error.message); }
+        const reply = (data.content || []).find(b => b.type === 'text')?.text || 'Sorry, got distracted. Ask me again?';
+        history.push({ role: 'assistant', content: reply });
+        wd.className = 'cmsg asst'; wd.textContent = reply;
+      } catch (e) {
+        wd.className = 'cmsg asst';
+        wd.textContent = e.message?.includes('401') || e.message?.includes('auth')
+          ? 'Invalid API key — click ⚙ API Key to update it.'
+          : 'Something went sideways. Try again?';
+      }
+
+      btn.disabled = false;
+      msgs.scrollTop = msgs.scrollHeight;
+      box.focus();
+    }
+
+    document.getElementById('chatBox').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  </script>
+</body>
+
+</html>
