@@ -662,16 +662,6 @@ html, body {
   </div>
 </div>
 
-<!-- ===== INFO MODAL (escape hatch — not shown by default) ===== -->
-<div id="apiKeyModal" style="position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(5,12,28,.75);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .3s;">
-  <div style="background:#fffdf7;border-radius:14px;padding:32px;width:min(420px,92vw);box-shadow:0 8px 48px rgba(0,0,0,.4);position:relative;">
-    <button onclick="document.getElementById('apiKeyModal').classList.remove('on');document.getElementById('apiKeyModal').style.opacity='0';document.getElementById('apiKeyModal').style.pointerEvents='none';"
-      style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,.08);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:.9rem;">✕</button>
-    <h3 style="font-family:'DM Serif Display',serif;font-size:1.3rem;margin-bottom:10px;">Dog River, SK</h3>
-    <p style="font-size:.95rem;line-height:1.65;color:#5a3a1a;">An AiSK Pioneer Prize submission exploring how AI is reshaping life in rural Saskatchewan.<br><br>Click any building on the map to meet a resident and chat with them.</p>
-  </div>
-</div>
-
 <script>
 // ===== STARS =====
 (function(){
